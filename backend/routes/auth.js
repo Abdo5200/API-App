@@ -7,11 +7,11 @@ const { body } = require("express-validator");
 const User = require("../models/user");
 
 const authController = require("../controller/auth");
-
+//PUT auth/signup --> signup a new user
 router.put(
   "/signup",
   [
-    body("name").trim().isAlphanumeric().not().isEmpty(),
+    body("name").trim().not().isEmpty(),
     body("email")
       .isEmail()
       .withMessage("Please Enter a valid email")
@@ -29,6 +29,16 @@ router.put(
     body("password").trim().isLength({ min: 5 }),
   ],
   authController.signup
+);
+
+//POST auth/login --> login an user
+router.post(
+  "/login",
+  [
+    body("email").trim().isEmail(),
+    body("password").trim().isLength({ min: 5 }),
+  ],
+  authController.login
 );
 
 module.exports = router;

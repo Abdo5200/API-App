@@ -3,6 +3,8 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 
+const User = require("../models/user");
+
 const { validationResult } = require("express-validator");
 
 const Post = require("../models/post");
@@ -67,13 +69,17 @@ exports.createPost = async (req, res, next) => {
     const post = new Post({
       title: title,
       content: content,
-      creator: { name: "Abdelrahman" },
+      creator: req.userId,
       imageUrl: imageUrl,
     });
     const savedPost = await post.save();
+    const user = await User.findById(req.userId);
+    user.posts.push(post);
+    user.save();
     res.status(201).json({
       message: "Created Post successfully",
       post: savedPost,
+      creator: { _id: user._id, name: user.name },
     });
   } catch (err) {
     errorCall(err, next);
@@ -123,6 +129,9 @@ exports.updatePost = async (req, res, next) => {
     if (!post) {
       clientSideError("Couldn't find post", 404);
     }
+    if (post.creator.toString() !== req.userId) {
+      clientSideError("Not Authorized!", 403);
+    }
     if (updatedImageUrl !== post.imageUrl) removeImage(post.imageUrl);
     post.title = updatedTtitle;
     post.content = updatedContent;
@@ -148,9 +157,60 @@ exports.deletePost = async (req, res, next) => {
     if (!post) {
       clientSideError("Post could not be found", 404);
     }
+    if (post.creator.toString() !== req.userId) {
+      clientSideError("Not Authorized", 403);
+    }
+    const user = await User.findById(req.userId);
+    user.posts = user.posts.filter((post) => {
+      return postId !== post.toString();
+    });
+    await user.save();
     removeImage(post.imageUrl);
     await Post.findOneAndDelete(postId);
-    res.status(200).json({ message: "Deleted Post successfully" });
+    res.status(204).json({ message: "Deleted Post successfully" });
+  } catch (err) {
+    errorCall(err, next);
+  }
+};
+
+/**
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+
+exports.getStatus = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      clientSideError("Not Authorized!", 404);
+    }
+    res
+      .status(200)
+      .json({ message: "Fetched Status successfully", status: user.status });
+  } catch (err) {
+    errorCall(err, next);
+  }
+};
+
+/**
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+
+exports.updateStatus = async (req, res, next) => {
+  try {
+    const status = req.body.status;
+    const user = await User.findById(req.userId);
+    if (!user) {
+      clientSideError("Not Authorized!", 404);
+    }
+    if (status !== user.status) {
+      user.status = status;
+      await user.save();
+    }
+    res
+      .status(200)
+      .json({ message: "Updated Status successfully", status: status });
   } catch (err) {
     errorCall(err, next);
   }
