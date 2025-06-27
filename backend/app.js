@@ -14,6 +14,8 @@ const multer = require("multer");
 
 const { v4: uuidv4 } = require("uuid");
 
+require("dotenv").config();
+
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -36,7 +38,7 @@ const fileFilter = (req, file, cb) => {
   else cb(null, false);
 };
 
-const MONGODB_URI ="";
+const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(bodyParser.json());
 
@@ -72,7 +74,7 @@ mongoose
   .connect(MONGODB_URI)
   .then((result) => {
     console.log("DB Connected");
-    const server = app.listen(8080);
+    const server = app.listen(process.env.PORT);
     const io = require("./socket").init(server, {
       cors: {
         origin: "*",
