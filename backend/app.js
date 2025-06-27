@@ -36,8 +36,7 @@ const fileFilter = (req, file, cb) => {
   else cb(null, false);
 };
 
-const MONGODB_URI =
-  "mongodb+srv://abdelrahman_mamdouh:AmdRyzen32200g@cluster0.henws.mongodb.net/messages";
+const MONGODB_URI ="";
 
 app.use(bodyParser.json());
 
