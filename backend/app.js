@@ -74,7 +74,12 @@ mongoose
   .then((result) => {
     console.log("DB Connected");
     const server = app.listen(8080);
-    const io = require("socket.io")(server);
+    const io = require("./socket").init(server, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
     io.on("connection", (socket) => {
       console.log("Client connected");
     });
