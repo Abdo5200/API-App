@@ -78,7 +78,7 @@ exports.login = async (req, res, next) => {
     }
     const token = jwt.sign(
       { email: user.email, userId: user._id.toString() },
-      "amdryzencpuisbetter",
+      process.env.API_SECRET,
       { expiresIn: "1h" }
     );
     res.status(200).json({
