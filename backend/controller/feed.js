@@ -5,6 +5,8 @@ const path = require("path");
 
 const User = require("../models/user");
 
+const io = require("../socket");
+
 const { validationResult } = require("express-validator");
 
 const Post = require("../models/post");
@@ -40,6 +42,8 @@ exports.getPosts = async (req, res, next) => {
     const currentPage = req.query.page || 1;
     const numOfPosts = await Post.find().countDocuments();
     const posts = await Post.find()
+      .populate("creator")
+      .sort({ createdAt: -1 })
       .skip((currentPage - 1) * NUM_OF_POSTS_PER_PAGE)
       .limit(NUM_OF_POSTS_PER_PAGE);
     res.status(200).json({
@@ -59,23 +63,34 @@ exports.getPosts = async (req, res, next) => {
 exports.createPost = async (req, res, next) => {
   try {
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
       clientSideError("validation failed, entered data is incorrect", 422);
     }
+
     if (!req.file) clientSideError("No image provided", 422);
+
     const title = req.body.title;
     const content = req.body.content;
     const imageUrl = req.file.path.replace("\\", "/");
+
     const post = new Post({
       title: title,
       content: content,
       creator: req.userId,
       imageUrl: imageUrl,
     });
+
     const savedPost = await post.save();
     const user = await User.findById(req.userId);
     user.posts.push(post);
     user.save();
+
+    io.getIO().emit("posts", {
+      action: "create",
+      post: { ...post._doc, creator: { _id: req.userId, name: user.name } },
+    });
+
     res.status(201).json({
       message: "Created Post successfully",
       post: savedPost,
@@ -125,11 +140,11 @@ exports.updatePost = async (req, res, next) => {
     if (!updatedImageUrl) {
       clientSideError("Image was not picked", 422);
     }
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate("creator");
     if (!post) {
       clientSideError("Couldn't find post", 404);
     }
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       clientSideError("Not Authorized!", 403);
     }
     if (updatedImageUrl !== post.imageUrl) removeImage(post.imageUrl);
@@ -137,6 +152,7 @@ exports.updatePost = async (req, res, next) => {
     post.content = updatedContent;
     post.imageUrl = updatedImageUrl;
     const savedPost = await post.save();
+    io.getIO().emit("posts", { action: "update", post: post });
     res
       .status(200)
       .json({ message: "Updated Post successfullt", post: savedPost });
@@ -167,6 +183,7 @@ exports.deletePost = async (req, res, next) => {
     await user.save();
     removeImage(post.imageUrl);
     await Post.findOneAndDelete(postId);
+    io.getIO().emit("posts", { action: "delete", post: postId });
     res.status(204).json({ message: "Deleted Post successfully" });
   } catch (err) {
     errorCall(err, next);
