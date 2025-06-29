@@ -24,7 +24,7 @@ const clientSideError = (message, errorCode) => {
 };
 
 const removeImage = (imagePath) => {
-  imagePath = path.join(__dirname, "..", imagePath);
+  imagePath = path.join(__dirname, imagePath);
   fs.unlink(imagePath, (err) => {
     console.log(err);
   });

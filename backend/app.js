@@ -38,8 +38,6 @@ const fileFilter = (req, file, cb) => {
   else cb(null, false);
 };
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
 app.use(bodyParser.json());
 
 app.use(
@@ -71,7 +69,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then((result) => {
     console.log("DB Connected");
     const server = app.listen(process.env.PORT);
