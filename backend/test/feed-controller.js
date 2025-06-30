@@ -10,6 +10,8 @@ const feedController = require("../controller/feed");
 
 const io = require("../socket");
 
+require("dotenv").config();
+
 const mongoose = require("mongoose");
 
 describe("Feed Controller", function () {
