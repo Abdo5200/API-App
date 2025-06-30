@@ -15,10 +15,8 @@ const mongoose = require("mongoose");
 describe("Feed Controller", function () {
   before(function (done) {
     sinon.stub(io, "getIO").returns({ emit: () => {} });
-    const MONGODB_URI =
-      "mongodb+srv://abdelrahman_mamdouh:AmdRyzen32200g@cluster0.henws.mongodb.net/test-messages?retryWrites=true&w=majority&appName=Cluster0/";
     mongoose
-      .connect(MONGODB_URI)
+      .connect(process.env.MONGODB_TEST)
       .then(() => {
         const user = new User({
           email: "test@test.com",
