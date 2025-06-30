@@ -84,7 +84,7 @@ exports.createPost = async (req, res, next) => {
     const savedPost = await post.save();
     const user = await User.findById(req.userId);
     user.posts.push(post);
-    user.save();
+    const savedUser = await user.save();
 
     io.getIO().emit("posts", {
       action: "create",
@@ -96,6 +96,7 @@ exports.createPost = async (req, res, next) => {
       post: savedPost,
       creator: { _id: user._id, name: user.name },
     });
+    return savedUser;
   } catch (err) {
     errorCall(err, next);
   }

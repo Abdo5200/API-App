@@ -86,7 +86,9 @@ exports.login = async (req, res, next) => {
       token: token,
       userId: user._id.toString(),
     });
+    return;
   } catch (err) {
     errorCall(err, next);
+    return err;
   }
 };

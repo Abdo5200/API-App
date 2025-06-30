@@ -16,6 +16,8 @@ const { v4: uuidv4 } = require("uuid");
 
 require("dotenv").config();
 
+const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.henws.mongodb.net/${process.env.MONGO_DB}`;
+
 const app = express();
 
 const fileStorage = multer.diskStorage({
@@ -69,7 +71,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(MONGODB_URI)
   .then((result) => {
     console.log("DB Connected");
     const server = app.listen(process.env.PORT);
